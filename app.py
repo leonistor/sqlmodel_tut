@@ -1,5 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi.responses import HTMLResponse
+
+import dominate
+from dominate.tags import link, div, attr, p, a, ol, li, section, hr
+
 from debug_toolbar.middleware import DebugToolbarMiddleware
+
 from sqlmodel import Session, select
 from typing import List, Optional
 
@@ -17,7 +23,7 @@ from seed import create_heroes
 
 
 app = FastAPI(debug=True)
-app.add_middleware(DebugToolbarMiddleware)
+# app.add_middleware(DebugToolbarMiddleware)
 
 
 def get_session():
@@ -156,3 +162,25 @@ def delete_team(*, session: Session = Depends(get_session), team_id: int):
     session.delete(team)
     session.commit()
     return {"ok": True}
+
+
+# ---
+
+# test html
+
+
+@app.get("/hello/{n}", response_class=HTMLResponse)
+async def hello(n: int = 10):
+    """dominate html generation"""
+    doc = dominate.document(title="Hello, Zuza!")
+    with doc:
+        with div(id="header").add(ol()):
+            for i in ["home", "about", "contact"]:
+                li(a(i.title(), href="/%s.html" % i))
+        with div():
+            attr(cls="body")
+            p("Lorem ipsum..")
+        with section():
+            p(f"ana are {n} mere")
+    doc.add(hr())
+    return doc.render(pretty=True)
